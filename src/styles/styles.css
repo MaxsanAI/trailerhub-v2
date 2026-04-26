@@ -30,37 +30,58 @@
   }
 }
 
-/* PAGE TRANSITION OLD */
+/* =========================
+   PAGE TRANSITIONS (ROOT)
+========================= */
+
 ::view-transition-old(root) {
   animation:
     fade-out 90ms cubic-bezier(0.4, 0, 1, 1) both,
     slide-to-left 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* PAGE TRANSITION NEW */
 ::view-transition-new(root) {
   animation:
     fade-in 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both,
     slide-from-right 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* POSTER FIX — KLJUČNO */
-::view-transition-old(movie-poster),
-::view-transition-new(movie-poster) {
-  animation: none !important;
-  transform: none !important;
-  opacity: 1;
+/* =========================
+   VIEW TRANSITION CLEANUP
+   (FIX FOR GHOST OVERLAY)
+========================= */
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(*),
+::view-transition-image-pair(*) {
   mix-blend-mode: normal;
 }
 
-/* ELEMENTS */
-.nav {
-  view-transition-name: main-header;
+/* =========================
+   IMPORTANT: POSTER RULE
+   (NO DUPLICATE TRANSITION NAME!)
+========================= */
+
+/* LIST PAGE - MUST NOT PARTICIPATE */
+.movie-poster {
+  view-transition-name: none;
+}
+
+/* DETAIL PAGE - ONLY HERE IT EXISTS */
+.movie-poster-detail {
+  view-transition-name: movie-poster;
   contain: paint;
 }
 
-.movie-poster {
-  view-transition-name: movie-poster;
+/* =========================
+   OTHER ELEMENTS
+========================= */
+
+.nav {
+  view-transition-name: main-header;
   contain: paint;
 }
 
@@ -72,6 +93,10 @@
 .thumbnail {
   contain: paint;
 }
+
+/* =========================
+   GENRE UI
+========================= */
 
 .genres {
   display: flex;
