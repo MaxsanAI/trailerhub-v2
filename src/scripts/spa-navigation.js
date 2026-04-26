@@ -14,31 +14,26 @@ navigation.addEventListener('navigate', (event) => {
   if (location.origin !== toUrl.origin) return
 
   const toPath = toUrl.pathname
-  const fromPath = location.pathname
-
-  const type = getNavigationType(fromPath, toPath)
 
   event.intercept({
     scroll: 'manual',
 
     async handler() {
-      const fragmentUrl = useTvFragment(event)
-        ? '/fragments/TvDetails'
-        : '/fragments/MovieDetails'
+      const isTv = useTvFragment(event)
+      const base = isTv ? '/fragments/TvDetails' : '/fragments/MovieDetails'
 
       const id = getPathId(toPath)
 
-      const response = await fetch(`${fragmentUrl}/${id}`)
-      const data = await response.text()
+      const res = await fetch(`${base}/${id}`)
+      const html = await res.text()
 
-      // SIMPLE SAFE SWAP (old stable way)
       if (!document.startViewTransition) {
-        updateTheDOMSomehow(data)
+        updateTheDOMSomehow(html)
         return
       }
 
       document.startViewTransition(() => {
-        updateTheDOMSomehow(data)
+        updateTheDOMSomehow(html)
 
         const container = document.getElementById('container')
         if (container) container.scrollTop = 0
