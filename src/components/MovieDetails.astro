@@ -1,0 +1,24 @@
+---
+const { id } = Astro.props;
+
+const API_KEY = import.meta.env.TMDB_API_KEY;
+
+const res = await fetch(
+  `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&append_to_response=credits,videos,images`
+);
+
+const data = await res.json();
+
+const videos = data?.videos?.results ?? [];
+const credits = data?.credits ?? { cast: [], crew: [] };
+const images = data?.images?.backdrops ?? [];
+
+const movie = {
+  ...data,
+  videos,
+  credits,
+  images,
+};
+---
+
+<!-- TU IDE TVOJ POSTOJEĆI HTML (isti koji si već imao) -->
