@@ -13,13 +13,18 @@ navigation.addEventListener('navigate', (event) => {
       const html = await res.text()
 
       if (!document.startViewTransition) {
-        updateTheDOMSomehow(html)
-        return
-      }
+       function updateTheDOMSomehow(htmlString) {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(htmlString, 'text/html')
 
-      document.startViewTransition(() => {
-        updateTheDOMSomehow(html)
-      })
-    },
-  })
-})
+  const newContent =
+    doc.querySelector('#content') ||
+    doc.querySelector('#container') ||
+    doc.body
+
+  const current = document.querySelector('#content') || document.querySelector('#container')
+
+  if (current && newContent) {
+    current.innerHTML = newContent.innerHTML
+  }
+}
