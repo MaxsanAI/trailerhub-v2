@@ -11,21 +11,37 @@ const genreMap = {
 
 const genreId = genreMap[genre];
 
+if (!genreId) {
+  throw new Error("Invalid genre");
+}
+
+const API_KEY = import.meta.env.TMDB_API_KEY;
+
 const res = await fetch(
-  `https://api.themoviedb.org/3/discover/movie?api_key=TMDB_API_KEY&with_genres=${genreId}`
+  `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&with_genres=${genreId}`
 );
 
 const data = await res.json();
-const movies = data.results;
+const movies = data?.results ?? [];
 ---
 
-<h1>{genre.toUpperCase()}</h1>
+<h1 class="text-2xl font-bold mb-4">
+  {genre.toUpperCase()}
+</h1>
 
-<div class="grid">
-  {movies.map(movie => (
-    <div>
-      <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} />
-      <p>{movie.title}</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  {movies.map((movie) => (
+    <div class="bg-black/5 rounded-lg overflow-hidden">
+      <img
+        src={
+          movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : "/placeholder.jpg"
+        }
+        alt={movie.title}
+        class="w-full h-auto"
+      />
+      <p class="p-2 text-sm">{movie.title}</p>
     </div>
   ))}
 </div>
