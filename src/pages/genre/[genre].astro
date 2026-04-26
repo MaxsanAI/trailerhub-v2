@@ -12,7 +12,7 @@ const genreMap = {
 const genreId = genreMap[genre];
 
 const res = await fetch(
-  `https://api.themoviedb.org/3/discover/movie?api_key=YOUR_API_KEY&with_genres=${genreId}`
+  `https://api.themoviedb.org/3/discover/movie?api_key=TMDB_API_KEY&with_genres=${genreId}`
 );
 
 const data = await res.json();
