@@ -1,8 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import MovieDetails from '../fragments/MovieDetails/[id].astro';
+import MovieDetails from '../../components/MovieDetails.astro';
+
+const { id } = Astro.params;
 ---
 
-<Layout title="Astro Movies">
-  <MovieDetails />
+<Layout>
+  <MovieDetails id={id} />
 </Layout>
