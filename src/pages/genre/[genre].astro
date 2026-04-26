@@ -1,0 +1,31 @@
+---
+const { genre } = Astro.params;
+
+const genreMap = {
+  action: 28,
+  comedy: 35,
+  horror: 27,
+  romance: 10749,
+  documentary: 99,
+};
+
+const genreId = genreMap[genre];
+
+const res = await fetch(
+  `https://api.themoviedb.org/3/discover/movie?api_key=YOUR_API_KEY&with_genres=${genreId}`
+);
+
+const data = await res.json();
+const movies = data.results;
+---
+
+<h1>{genre.toUpperCase()}</h1>
+
+<div class="grid">
+  {movies.map(movie => (
+    <div>
+      <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} />
+      <p>{movie.title}</p>
+    </div>
+  ))}
+</div>
