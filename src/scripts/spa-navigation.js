@@ -3,53 +3,52 @@ import {
   getPathId,
   isBackNavigation,
   shouldNotIntercept,
-  updateTheDOMSomehow,
   useTvFragment,
 } from './utils'
 
-// Keep SPA enabled
 function shouldDisableSpa() {
   return false
 }
 
-navigation.addEventListener('navigate', (navigateEvent) => {
-  if (shouldDisableSpa()) return
-  if (shouldNotIntercept(navigateEvent)) return
+/* =========================
+   NAVIGATION INTERCEPT
+========================= */
 
-  const toUrl = new URL(navigateEvent.destination.url)
+navigation.addEventListener('navigate', (event) => {
+  if (shouldDisableSpa()) return
+  if (shouldNotIntercept(event)) return
+
+  const toUrl = new URL(event.destination.url)
   const toPath = toUrl.pathname
   const fromPath = location.pathname
 
-  const navigationType = getNavigationType(fromPath, toPath)
-
   if (location.origin !== toUrl.origin) return
 
-  switch (navigationType) {
+  const type = getNavigationType(fromPath, toPath)
+
+  switch (type) {
     case 'home-to-movie':
     case 'tv-to-show':
-      handleHomeToMovieTransition(navigateEvent, getPathId(toPath))
+      handleTransition(event, {
+        id: getPathId(toPath),
+        from: 'list',
+      })
       break
 
     case 'movie-to-home':
     case 'show-to-tv':
-      handleMovieToHomeTransition(navigateEvent, getPathId(fromPath))
+      handleTransition(event, {
+        id: getPathId(fromPath),
+        from: 'detail',
+      })
       break
 
     case 'movie-to-person':
-      handleMovieToPersonTransition(
-        navigateEvent,
-        getPathId(fromPath),
-        getPathId(toPath)
-      )
-      break
-
     case 'person-to-movie':
-    case 'person-to-show':
-      handlePersonToMovieTransition(
-        navigateEvent,
-        getPathId(fromPath),
-        getPathId(toPath)
-      )
+      handleTransition(event, {
+        id: getPathId(toPath),
+        from: 'mixed',
+      })
       break
 
     default:
@@ -58,183 +57,85 @@ navigation.addEventListener('navigate', (navigateEvent) => {
 })
 
 /* =========================
-   HOME → MOVIE
+   CORE SAFE TRANSITION
 ========================= */
 
-function handleHomeToMovieTransition(navigateEvent, movieId) {
-  navigateEvent.intercept({
-    async handler() {
-      const fragmentUrl = useTvFragment(navigateEvent)
-        ? '/fragments/TvDetails'
-        : '/fragments/MovieDetails'
-
-      const response = await fetch(`${fragmentUrl}/${movieId}`)
-      const data = await response.text()
-
-      if (!document.startViewTransition) {
-        updateTheDOMSomehow(data)
-        return
-      }
-
-      const thumbnail = document.getElementById(`movie-poster-${movieId}`)
-
-      if (thumbnail) {
-        thumbnail.style.viewTransitionName = 'movie-poster'
-      }
-
-      const transition = document.startViewTransition(() => {
-        requestAnimationFrame(() => {
-          updateTheDOMSomehow(data)
-
-          document.getElementById('container')?.scrollTo(0, 0)
-
-          if (thumbnail) {
-            thumbnail.style.viewTransitionName = ''
-          }
-        })
-      })
-
-      await transition.finished
-    },
-  })
-}
-
-/* =========================
-   MOVIE → HOME
-========================= */
-
-function handleMovieToHomeTransition(navigateEvent, movieId) {
-  navigateEvent.intercept({
+async function handleTransition(event, { id, from }) {
+  event.intercept({
     scroll: 'manual',
+
     async handler() {
-      const fragmentUrl = useTvFragment(navigateEvent)
-        ? '/fragments/TvList'
-        : '/fragments/MovieList'
+      const fragmentUrl = useTvFragment(event)
+        ? resolveTv(from)
+        : resolveMovie(from, id)
 
       const response = await fetch(fragmentUrl)
-      const data = await response.text()
+      const html = await response.text()
 
       if (!document.startViewTransition) {
-        updateTheDOMSomehow(data)
+        safeRender(html)
         return
       }
 
-      const temp = document.createElement('div')
-      temp.innerHTML = data
-
-      const exists = temp.querySelector(`#movie-poster-${movieId}`)
-      const moviePoster = document.getElementById(`movie-poster`)
-
-      if (!exists && moviePoster) {
-        moviePoster.classList.remove('movie-poster')
-      }
-
-      const transition = document.startViewTransition(() => {
-        updateTheDOMSomehow(data)
-
-        const thumbnail = document.getElementById(`movie-poster-${movieId}`)
-
-        if (thumbnail) {
-          setTimeout(() => {
-            thumbnail.scrollIntoView({ block: 'center' })
-          }, 0)
-
-          thumbnail.style.viewTransitionName = 'movie-poster'
-        }
-      })
-
-      await transition.finished
+      await document.startViewTransition(() => {
+        requestAnimationFrame(() => {
+          safeRender(html)
+          resetScroll()
+          cleanupAlpine()
+        })
+      }).finished
     },
   })
 }
 
 /* =========================
-   MOVIE → PERSON
+   SAFE DOM REPLACE (KEY FIX)
 ========================= */
 
-function handleMovieToPersonTransition(navigateEvent, movieId, personId) {
-  const isBack = isBackNavigation(navigateEvent)
+function safeRender(htmlString) {
+  const container = document.getElementById('container')
+  if (!container) return
 
-  navigateEvent.intercept({
-    async handler() {
-      const response = await fetch(`/fragments/PersonDetails/${personId}`)
-      const data = await response.text()
+  const parsed = new DOMParser().parseFromString(htmlString, 'text/html')
+  const newContainer = parsed.querySelector('#container')
 
-      if (!document.startViewTransition) {
-        updateTheDOMSomehow(data)
-        return
-      }
+  if (!newContainer) return
 
-      let personThumb
+  // HARD CLEAN REPLACE (no innerHTML bugs)
+  container.replaceChildren(...newContainer.childNodes)
+}
 
-      if (!isBack) {
-        personThumb = document.getElementById(`person-photo-${personId}`)
-        if (personThumb) {
-          personThumb.style.viewTransitionName = 'person-photo'
-        }
-      }
+/* =========================
+   CLEANUP HELPERS
+========================= */
 
-      const transition = document.startViewTransition(() => {
-        requestAnimationFrame(() => {
-          updateTheDOMSomehow(data)
+function resetScroll() {
+  document.getElementById('container')?.scrollTo(0, 0)
+}
 
-          document.getElementById('container')?.scrollTo(0, 0)
-
-          if (personThumb) {
-            personThumb.style.viewTransitionName = ''
-          }
-        })
-      })
-
-      await transition.finished
-    },
+/* Alpine cleanup to prevent state bleed */
+function cleanupAlpine() {
+  document.querySelectorAll('[x-data]').forEach((el) => {
+    try {
+      el.__x = null
+    } catch (e) {}
   })
 }
 
 /* =========================
-   PERSON → MOVIE
+   FRAGMENT RESOLVERS
 ========================= */
 
-function handlePersonToMovieTransition(navigateEvent, personId, movieId) {
-  const isBack = isBackNavigation(navigateEvent)
+function resolveMovie(from, id) {
+  if (from === 'list') {
+    return `/fragments/MovieDetails/${id}`
+  }
+  return `/fragments/MovieList`
+}
 
-  navigateEvent.intercept({
-    scroll: 'manual',
-    async handler() {
-      const fragmentUrl = useTvFragment(navigateEvent)
-        ? '/fragments/TvDetails'
-        : '/fragments/MovieDetails'
-
-      const response = await fetch(`${fragmentUrl}/${movieId}`)
-      const data = await response.text()
-
-      if (!document.startViewTransition) {
-        updateTheDOMSomehow(data)
-        return
-      }
-
-      let movieThumb
-
-      if (!isBack) {
-        movieThumb = document.getElementById(`movie-poster-${movieId}`)
-        if (movieThumb) {
-          movieThumb.style.viewTransitionName = 'movie-poster'
-        }
-      }
-
-      const transition = document.startViewTransition(() => {
-        requestAnimationFrame(() => {
-          updateTheDOMSomehow(data)
-
-          document.getElementById('container')?.scrollTo(0, 0)
-
-          if (movieThumb) {
-            movieThumb.style.viewTransitionName = ''
-          }
-        })
-      })
-
-      await transition.finished
-    },
-  })
+function resolveTv(from) {
+  if (from === 'list') {
+    return `/fragments/TvDetails`
+  }
+  return `/fragments/TvList`
 }
