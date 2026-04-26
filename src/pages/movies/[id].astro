@@ -7,4 +7,13 @@ const { id } = Astro.params;
 
 <Layout>
   <MovieDetails id={id} />
+</Layout>---
+import Layout from '../../layouts/Layout.astro';
+import MovieDetails from '../../components/MovieDetails.astro';
+
+const { id } = Astro.params;
+---
+
+<Layout>
+  <MovieDetails id={id} />
 </Layout>
