@@ -60,3 +60,20 @@
 .thumbnail {
   contain: paint;
 }
+
+.genres {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  flex-wrap: wrap;
+}
+
+.genres a {
+  background: #222;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
