@@ -22,26 +22,45 @@ const res = await fetch(
 );
 
 const data = await res.json();
-const movies = data?.results ?? [];
+
+// SAFE fallback + clean mapping
+const movies = (data?.results ?? []).map((m) => ({
+  id: m.id,
+  title: m.title,
+  poster: m.poster_path
+    ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
+    : "https://via.placeholder.com/500x750?text=No+Image",
+  rating: m.vote_average ?? "N/A",
+  year: m.release_date ? new Date(m.release_date).getFullYear() : "",
+}));
 ---
 
-<h1 class="text-2xl font-bold mb-4">
+<h1 class="text-3xl font-bold mb-6">
   {genre.toUpperCase()}
 </h1>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
   {movies.map((movie) => (
-    <div class="bg-black/5 rounded-lg overflow-hidden">
+    <a
+      href={`/movie/${movie.id}`}
+      class="block bg-black/5 rounded-lg overflow-hidden hover:scale-[1.03] transition"
+    >
       <img
-        src={
-          movie.poster_path
-            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-            : "/placeholder.jpg"
-        }
+        src={movie.poster}
         alt={movie.title}
         class="w-full h-auto"
+        loading="lazy"
       />
-      <p class="p-2 text-sm">{movie.title}</p>
-    </div>
+
+      <div class="p-2">
+        <p class="text-sm font-semibold truncate">
+          {movie.title}
+        </p>
+
+        <p class="text-xs text-gray-400">
+          ⭐ {movie.rating} {movie.year && `• ${movie.year}`}
+        </p>
+      </div>
+    </a>
   ))}
 </div>
