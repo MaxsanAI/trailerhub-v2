@@ -4,5 +4,17 @@ import MovieList from './fragments/MovieList/index.astro';
 ---
 
 <Layout title="Astro Movies">
-	<MovieList />
+
+  <!-- 🔥 GENRES BAR -->
+  <section class="genres">
+    <a href="/genre/action">Action</a>
+    <a href="/genre/comedy">Comedy</a>
+    <a href="/genre/horror">Horror</a>
+    <a href="/genre/romance">Romance</a>
+    <a href="/genre/documentary">Documentary</a>
+  </section>
+
+  <!-- 🎬 MOVIES -->
+  <MovieList />
+
 </Layout>
