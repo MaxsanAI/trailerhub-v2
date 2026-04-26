@@ -3,6 +3,7 @@ import {
   getPathId,
   isBackNavigation,
   shouldNotIntercept,
+  updateTheDOMSomehow,
   useTvFragment,
 } from './utils'
 
@@ -11,7 +12,7 @@ function shouldDisableSpa() {
 }
 
 /* =========================
-   NAVIGATION INTERCEPT
+   NAVIGATION
 ========================= */
 
 navigation.addEventListener('navigate', (event) => {
@@ -29,113 +30,47 @@ navigation.addEventListener('navigate', (event) => {
   switch (type) {
     case 'home-to-movie':
     case 'tv-to-show':
-      handleTransition(event, {
-        id: getPathId(toPath),
-        from: 'list',
-      })
-      break
-
     case 'movie-to-home':
     case 'show-to-tv':
-      handleTransition(event, {
-        id: getPathId(fromPath),
-        from: 'detail',
-      })
-      break
-
     case 'movie-to-person':
     case 'person-to-movie':
-      handleTransition(event, {
-        id: getPathId(toPath),
-        from: 'mixed',
-      })
+    case 'person-to-show':
+      handleTransition(event, toPath, fromPath)
       break
-
     default:
       return
   }
 })
 
 /* =========================
-   CORE SAFE TRANSITION
+   SAFE TRANSITION (NO DOM BREAK)
 ========================= */
 
-async function handleTransition(event, { id, from }) {
+function handleTransition(event, toPath, fromPath) {
   event.intercept({
     scroll: 'manual',
 
     async handler() {
       const fragmentUrl = useTvFragment(event)
-        ? resolveTv(from)
-        : resolveMovie(from, id)
+        ? '/fragments/TvDetails'
+        : '/fragments/MovieDetails'
 
-      const response = await fetch(fragmentUrl)
-      const html = await response.text()
+      const response = await fetch(fragmentUrl + getPathId(toPath))
+      const data = await response.text()
 
+      // fallback (no ViewTransition support)
       if (!document.startViewTransition) {
-        safeRender(html)
+        updateTheDOMSomehow(data)
         return
       }
 
-      await document.startViewTransition(() => {
-        requestAnimationFrame(() => {
-          safeRender(html)
-          resetScroll()
-          cleanupAlpine()
-        })
-      }).finished
+      document.startViewTransition(() => {
+        updateTheDOMSomehow(data)
+
+        // safe scroll reset
+        const container = document.getElementById('container')
+        if (container) container.scrollTop = 0
+      })
     },
   })
-}
-
-/* =========================
-   SAFE DOM REPLACE (KEY FIX)
-========================= */
-
-function safeRender(htmlString) {
-  const container = document.getElementById('container')
-  if (!container) return
-
-  const parsed = new DOMParser().parseFromString(htmlString, 'text/html')
-  const newContainer = parsed.querySelector('#container')
-
-  if (!newContainer) return
-
-  // HARD CLEAN REPLACE (no innerHTML bugs)
-  container.replaceChildren(...newContainer.childNodes)
-}
-
-/* =========================
-   CLEANUP HELPERS
-========================= */
-
-function resetScroll() {
-  document.getElementById('container')?.scrollTo(0, 0)
-}
-
-/* Alpine cleanup to prevent state bleed */
-function cleanupAlpine() {
-  document.querySelectorAll('[x-data]').forEach((el) => {
-    try {
-      el.__x = null
-    } catch (e) {}
-  })
-}
-
-/* =========================
-   FRAGMENT RESOLVERS
-========================= */
-
-function resolveMovie(from, id) {
-  if (from === 'list') {
-    return `/fragments/MovieDetails/${id}`
-  }
-  return `/fragments/MovieList`
-}
-
-function resolveTv(from) {
-  if (from === 'list') {
-    return `/fragments/TvDetails`
-  }
-  return `/fragments/TvList`
 }
