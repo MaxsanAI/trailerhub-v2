@@ -43,7 +43,6 @@ const movies = (data?.results ?? []).map((m) => ({
   {movies.map((movie) => (
     <a
       href={`/fragments/MovieDetails/${movie.id}`}
-      data-astro-reload
       class="block bg-black/5 rounded-lg overflow-hidden transform transition hover:scale-[1.03]"
     >
 
