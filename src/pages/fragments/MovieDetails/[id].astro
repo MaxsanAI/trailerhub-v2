@@ -1,150 +1,54 @@
----
-const { id } = Astro.params;
+{movie.videos.length > 0 && (
+  <>
+    <button
+      id="openTrailer"
+      class="mt-12 bg-orange-500 text-black font-bold px-5 py-4 rounded"
+    >
+      ▶ Play Trailer
+    </button>
 
-const url = `https://api.themoviedb.org/3/movie/${id}?append_to_response=credits,videos,images&api_key=${import.meta.env.TMDB_API_KEY}`;
+    <div id="trailerModal" class="hidden fixed inset-0 bg-black/80 z-50 items-center justify-center">
+      
+      <button id="closeTrailer" class="absolute top-5 right-6 text-white text-4xl">
+        ×
+      </button>
 
-const response = await fetch(url);
-const data = await response.json();
-
-const movie = {
-  ...data,
-  poster_path: data.poster_path
-    ? 'https://image.tmdb.org/t/p/w500/' + data.poster_path
-    : 'https://via.placeholder.com/500x750',
-  vote_average: data.vote_average
-    ? (data.vote_average * 10).toFixed(2) + '%'
-    : 'N/A',
-  release_date: data.release_date
-    ? new Date(data.release_date).toLocaleDateString('en-us', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    : 'Unknown',
-  genres: data.genres?.map(g => g.name).join(', ') ?? '',
-  crew: data.credits?.crew?.slice(0, 3) ?? [],
-  cast: (data.credits?.cast ?? []).slice(0, 5).map(c => ({
-    ...c,
-    profile_path: c.profile_path
-      ? 'https://image.tmdb.org/t/p/w300/' + c.profile_path
-      : 'https://via.placeholder.com/300x450'
-  })),
-  images: data.images?.backdrops?.slice(0, 9) ?? [],
-  videos: data.videos?.results ?? [],
-};
----
-
-<!-- MOVIE INFO -->
-<div class="movie-info border-b border-gray-800">
-  <div class="container mx-auto px-4 py-16 flex flex-col md:flex-row">
-
-    <!-- POSTER -->
-    <div class="flex-none">
-      <img
-        src={movie.poster_path}
-        alt={movie.title}
-        class="w-64 lg:w-96 rounded"
-      />
-    </div>
-
-    <!-- INFO -->
-    <div class="md:ml-24">
-
-      <h2 class="text-4xl mt-4 md:mt-0 mb-2 font-semibold">
-        {movie.title}
-      </h2>
-
-      <div class="flex flex-wrap items-center text-gray-400 text-sm">
-        <span>{movie.vote_average}</span>
-        <span class="mx-2">|</span>
-        <span>{movie.release_date}</span>
-        <span class="mx-2">|</span>
-        <span>{movie.genres}</span>
+      <div class="relative w-full max-w-5xl" style="padding-top:56.25%">
+        <iframe
+          id="trailerFrame"
+          class="absolute top-0 left-0 w-full h-full"
+          src=""
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
       </div>
 
-      <p class="text-gray-300 mt-8">
-        {movie.overview}
-      </p>
-
-      <!-- TRAILER (CLEAN, NO BUG VERSION) -->
-      {movie.videos.length > 0 && (
-        <div x-data="{ trailerOpen: false }">
-
-          <div class="mt-12">
-            <button
-              @click="trailerOpen = true"
-              class="flex items-center bg-orange-500 text-gray-900 rounded font-semibold px-5 py-4 hover:bg-orange-600 transition"
-            >
-              ▶ Play Trailer
-            </button>
-          </div>
-
-          <!-- MODAL -->
-          <div
-            x-show="trailerOpen"
-            x-transition
-            class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-          >
-            <!-- CLOSE -->
-            <button
-              class="absolute top-5 right-6 text-white text-4xl"
-              @click="trailerOpen = false"
-            >
-              ×
-            </button>
-
-            <!-- VIDEO -->
-            <div class="relative w-full max-w-5xl" style="padding-top:56.25%">
-              <iframe
-                class="absolute top-0 left-0 w-full h-full"
-                :src="trailerOpen ? `https://www.youtube.com/embed/${movie.videos[0].key}?autoplay=1` : ''"
-                allow="autoplay; encrypted-media"
-                allowfullscreen
-              ></iframe>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-    </div>
-  </div>
-</div>
-
-<!-- CAST -->
-<div class="movie-cast border-b border-gray-800">
-  <div class="container mx-auto px-4 py-16">
-    <h2 class="text-4xl font-semibold">Cast</h2>
-
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
-      {movie.cast.map(cast => (
-        <div class="mt-8">
-          <img src={cast.profile_path} class="rounded" />
-          <div class="mt-2 text-sm">{cast.name}</div>
-          <div class="text-xs text-gray-400">{cast.character}</div>
-        </div>
-      ))}
     </div>
 
-  </div>
-</div>
+    <script is:inline>
+      const openBtn = document.getElementById("openTrailer");
+      const modal = document.getElementById("trailerModal");
+      const closeBtn = document.getElementById("closeTrailer");
+      const frame = document.getElementById("trailerFrame");
 
-<!-- IMAGES -->
-<div class="movie-images">
+      const key = "{movie.videos[0].key}";
 
-  <div class="container mx-auto px-4 py-16">
-    <h2 class="text-4xl font-semibold">Images</h2>
+      openBtn?.addEventListener("click", () => {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        frame.src = `https://www.youtube.com/embed/${key}?autoplay=1`;
+      });
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
-      {movie.images.map(img => (
-        <img
-          src={`https://image.tmdb.org/t/p/w500${img.file_path}`}
-          class="hover:opacity-75"
-          loading="lazy"
-        />
-      ))}
-    </div>
-  </div>
+      const close = () => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        frame.src = "";
+      };
 
-</div>
+      closeBtn?.addEventListener("click", close);
+      modal?.addEventListener("click", (e) => {
+        if (e.target === modal) close();
+      });
+    </script>
+  </>
+)}
