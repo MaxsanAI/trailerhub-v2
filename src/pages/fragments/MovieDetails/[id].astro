@@ -31,11 +31,12 @@ const movie = {
 };
 ---
 
+<!-- MOVIE INFO -->
 <div class="movie-info border-b border-gray-800">
   <div class="container mx-auto px-4 py-16 flex flex-col md:flex-row">
 
     <div class="flex-none">
-      <img src={movie.poster_path} alt={`${movie.title} Poster`} class="w-64 lg:w-96 rounded">
+      <img src={movie.poster_path} class="w-64 lg:w-96 rounded">
     </div>
 
     <div class="md:ml-24">
@@ -45,7 +46,7 @@ const movie = {
       </h2>
 
       <div class="flex flex-wrap items-center text-gray-400 text-sm">
-        <span class="ml-1">{movie.vote_average}</span>
+        <span>{movie.vote_average}</span>
         <span class="mx-2">|</span>
         <span>{movie.release_date}</span>
         <span class="mx-2">|</span>
@@ -56,8 +57,8 @@ const movie = {
         {movie.overview}
       </p>
 
-      <!-- TRAILER -->
-      <div x-data="{ trailerOpen: false }" x-init="trailerOpen = false">
+      <!-- TRAILER FIX -->
+      <div x-data="{ trailerOpen: false }">
 
         {movie.videos.results.length > 0 && (
           <div class="mt-12">
@@ -70,167 +71,21 @@ const movie = {
           </div>
         )}
 
-        {movie.videos.results.length > 0 && trailerOpen && (
-          <Modal open="trailerOpen" close="trailerOpen = false">
-            <div class="relative w-full overflow-hidden" style="padding-top:56.25%">
-              <iframe
-                class="absolute top-0 left-0 w-full h-full"
-                src={`https://www.youtube.com/embed/${movie.videos.results[0].key}?autoplay=1`}
-                allow="autoplay; encrypted-media"
-                allowfullscreen
-              ></iframe>
-            </div>
-          </Modal>
-        )}
-
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- CAST -->
-<div class="movie-cast border-b border-gray-800">
-  <div class="container mx-auto px-4 py-16">
-    <h2 class="text-4xl font-semibold">Cast</h2>
-
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
-      {movie.cast.map(cast => (
-        <div class="mt-8">
-          <img src={cast.profile_path} class="rounded">
-          <div class="mt-2 text-sm">{cast.name}</div>
-          <div class="text-xs text-gray-400">{cast.character}</div>
-        </div>
-      ))}
-    </div>
-
-  </div>
-</div>
-
-<!-- IMAGES -->
-<div class="movie-images" x-data="{ imageOpen: false, image: '' }">
-
-  <div class="container mx-auto px-4 py-16">
-    <h2 class="text-4xl font-semibold">Images</h2>
-
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
-
-      {movie.images.map(img => (
-        <a
-          href="#"
-          @click.prevent={`
-            imageOpen = true;
-            image = 'https://image.tmdb.org/t/p/original/${img.file_path}'
-          `}
-        >
-          <img
-            src={`https://image.tmdb.org/t/p/w500${img.file_path}`}
-            class="hover:opacity-75"
-            loading="lazy"
-          />
-        </a>
-      ))}
-
-    </div>
-  </div>
-
-  <!-- IMAGE MODAL -->
-  <template x-if="imageOpen">
-    <div class="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-      <button
-        class="absolute top-4 right-6 text-white text-3xl"
-        @click="imageOpen = false"
-      >
-        ×
-      </button>
-
-      <img :src="image" class="max-h-[90vh] max-w-[90vw]">
-    </div>
-  </template>
-
-</div>---
-import Modal from '../../../components/Modal.astro';
-
-const { id } = Astro.params;
-
-const url = `https://api.themoviedb.org/3/movie/${id}?append_to_response=credits,videos,images&api_key=${import.meta.env.TMDB_API_KEY}`;
-
-const response = await fetch(url);
-const data = await response.json();
-
-const movie = {
-  ...data,
-  poster_path: data.poster_path
-    ? 'https://image.tmdb.org/t/p/w500/' + data.poster_path
-    : 'https://via.placeholder.com/500x750',
-  vote_average: (data.vote_average * 10).toFixed(2) + '%',
-  release_date: new Date(data.release_date).toLocaleDateString('en-us', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }),
-  genres: data.genres.map(g => g.name).join(', '),
-  crew: data.credits.crew.slice(0, 3),
-  cast: data.credits.cast.slice(0, 5).map(c => ({
-    ...c,
-    profile_path: c.profile_path
-      ? 'https://image.tmdb.org/t/p/w300/' + c.profile_path
-      : 'https://via.placeholder.com/300x450'
-  })),
-  images: data.images.backdrops.slice(0, 9),
-};
----
-
-<div class="movie-info border-b border-gray-800">
-  <div class="container mx-auto px-4 py-16 flex flex-col md:flex-row">
-
-    <div class="flex-none">
-      <img src={movie.poster_path} alt={`${movie.title} Poster`} class="w-64 lg:w-96 rounded">
-    </div>
-
-    <div class="md:ml-24">
-
-      <h2 class="text-4xl mt-4 md:mt-0 mb-2 font-semibold">
-        {movie.title}
-      </h2>
-
-      <div class="flex flex-wrap items-center text-gray-400 text-sm">
-        <span class="ml-1">{movie.vote_average}</span>
-        <span class="mx-2">|</span>
-        <span>{movie.release_date}</span>
-        <span class="mx-2">|</span>
-        <span>{movie.genres}</span>
-      </div>
-
-      <p class="text-gray-300 mt-8">
-        {movie.overview}
-      </p>
-
-      <!-- TRAILER -->
-      <div x-data="{ trailerOpen: false }" x-init="trailerOpen = false">
-
         {movie.videos.results.length > 0 && (
-          <div class="mt-12">
-            <button
-              @click="trailerOpen = true"
-              class="flex items-center bg-orange-500 text-gray-900 rounded font-semibold px-5 py-4 hover:bg-orange-600 transition"
-            >
-              ▶ Play Trailer
-            </button>
-          </div>
-        )}
+          <template x-if="trailerOpen">
+            <Modal open="trailerOpen" close="trailerOpen = false">
 
-        {movie.videos.results.length > 0 && trailerOpen && (
-          <Modal open="trailerOpen" close="trailerOpen = false">
-            <div class="relative w-full overflow-hidden" style="padding-top:56.25%">
-              <iframe
-                class="absolute top-0 left-0 w-full h-full"
-                src={`https://www.youtube.com/embed/${movie.videos.results[0].key}?autoplay=1`}
-                allow="autoplay; encrypted-media"
-                allowfullscreen
-              ></iframe>
-            </div>
-          </Modal>
+              <div class="relative w-full overflow-hidden" style="padding-top:56.25%">
+                <iframe
+                  class="absolute top-0 left-0 w-full h-full"
+                  src={`https://www.youtube.com/embed/${movie.videos.results[0].key}?autoplay=1`}
+                  allow="autoplay; encrypted-media"
+                  allowfullscreen
+                ></iframe>
+              </div>
+
+            </Modal>
+          </template>
         )}
 
       </div>
