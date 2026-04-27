@@ -39,12 +39,15 @@ const movies = (data?.results ?? []).map((m) => ({
 </h1>
 
 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+
   {movies.map((movie) => (
     <a
       href={`/fragments/MovieDetails/${movie.id}`}
+      data-astro-reload
       class="block bg-black/5 rounded-lg overflow-hidden transform transition hover:scale-[1.03]"
     >
-      <!-- FIXED POSTER -->
+
+      <!-- POSTER -->
       <div class="aspect-[2/3] w-full overflow-hidden">
         <img
           src={movie.poster}
@@ -54,15 +57,19 @@ const movies = (data?.results ?? []).map((m) => ({
         />
       </div>
 
+      <!-- INFO -->
       <div class="p-2">
         <p class="text-sm font-semibold truncate">
           {movie.title}
         </p>
 
         <p class="text-xs text-gray-400">
-          ⭐ {movie.rating} {movie.year && `• ${movie.year}`}
+          ⭐ {movie.rating}
+          {movie.year && ` • ${movie.year}`}
         </p>
       </div>
+
     </a>
   ))}
+
 </div>
