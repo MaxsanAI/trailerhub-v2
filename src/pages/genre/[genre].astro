@@ -42,14 +42,17 @@ const movies = (data?.results ?? []).map((m) => ({
   {movies.map((movie) => (
     <a
       href={`/fragments/MovieDetails/${movie.id}`}
-      class="block bg-black/5 rounded-lg overflow-hidden hover:scale-[1.03] transition"
+      class="block bg-black/5 rounded-lg overflow-hidden transform transition hover:scale-[1.03]"
     >
-      <img
-        src={movie.poster}
-        alt={movie.title}
-        class="w-full h-auto"
-        loading="lazy"
-      />
+      <!-- FIXED POSTER -->
+      <div class="aspect-[2/3] w-full overflow-hidden">
+        <img
+          src={movie.poster}
+          alt={movie.title}
+          class="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
 
       <div class="p-2">
         <p class="text-sm font-semibold truncate">
