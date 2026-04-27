@@ -13,32 +13,42 @@ const movie = {
   poster_path: data.poster_path
     ? 'https://image.tmdb.org/t/p/w500/' + data.poster_path
     : 'https://via.placeholder.com/500x750',
-  vote_average: (data.vote_average * 10).toFixed(2) + '%',
-  release_date: new Date(data.release_date).toLocaleDateString('en-us', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }),
-  genres: data.genres.map(g => g.name).join(', '),
-  crew: data.credits.crew.slice(0, 3),
-  cast: data.credits.cast.slice(0, 5).map(c => ({
+  vote_average: data.vote_average
+    ? (data.vote_average * 10).toFixed(2) + '%'
+    : 'N/A',
+  release_date: data.release_date
+    ? new Date(data.release_date).toLocaleDateString('en-us', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : 'Unknown',
+  genres: data.genres?.map(g => g.name).join(', ') ?? '',
+  crew: data.credits?.crew?.slice(0, 3) ?? [],
+  cast: (data.credits?.cast ?? []).slice(0, 5).map(c => ({
     ...c,
     profile_path: c.profile_path
       ? 'https://image.tmdb.org/t/p/w300/' + c.profile_path
       : 'https://via.placeholder.com/300x450'
   })),
-  images: data.images.backdrops.slice(0, 9),
+  images: data.images?.backdrops?.slice(0, 9) ?? [],
+  videos: data.videos?.results ?? [],
 };
 ---
 
-<!-- MOVIE INFO -->
 <div class="movie-info border-b border-gray-800">
   <div class="container mx-auto px-4 py-16 flex flex-col md:flex-row">
 
+    <!-- POSTER -->
     <div class="flex-none">
-      <img src={movie.poster_path} class="w-64 lg:w-96 rounded">
+      <img
+        src={movie.poster_path}
+        alt={movie.title}
+        class="w-64 lg:w-96 rounded"
+      />
     </div>
 
+    <!-- INFO -->
     <div class="md:ml-24">
 
       <h2 class="text-4xl mt-4 md:mt-0 mb-2 font-semibold">
@@ -57,10 +67,10 @@ const movie = {
         {movie.overview}
       </p>
 
-      <!-- TRAILER FIX -->
+      <!-- TRAILER (SAFE VERSION) -->
       <div x-data="{ trailerOpen: false }">
 
-        {movie.videos.results.length > 0 && (
+        {movie.videos.length > 0 && (
           <div class="mt-12">
             <button
               @click="trailerOpen = true"
@@ -71,21 +81,19 @@ const movie = {
           </div>
         )}
 
-        {movie.videos.results.length > 0 && (
-          <template x-if="trailerOpen">
-            <Modal open="trailerOpen" close="trailerOpen = false">
+        {movie.videos.length > 0 && (
+          <Modal open="trailerOpen" close="trailerOpen = false">
 
-              <div class="relative w-full overflow-hidden" style="padding-top:56.25%">
-                <iframe
-                  class="absolute top-0 left-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${movie.videos.results[0].key}?autoplay=1`}
-                  allow="autoplay; encrypted-media"
-                  allowfullscreen
-                ></iframe>
-              </div>
+            <div class="relative w-full overflow-hidden" style="padding-top:56.25%">
+              <iframe
+                class="absolute top-0 left-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${movie.videos[0].key}?autoplay=1`}
+                allow="autoplay; encrypted-media"
+                allowfullscreen
+              ></iframe>
+            </div>
 
-            </Modal>
-          </template>
+          </Modal>
         )}
 
       </div>
@@ -102,7 +110,7 @@ const movie = {
     <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
       {movie.cast.map(cast => (
         <div class="mt-8">
-          <img src={cast.profile_path} class="rounded">
+          <img src={cast.profile_path} class="rounded" />
           <div class="mt-2 text-sm">{cast.name}</div>
           <div class="text-xs text-gray-400">{cast.character}</div>
         </div>
@@ -149,7 +157,7 @@ const movie = {
         ×
       </button>
 
-      <img :src="image" class="max-h-[90vh] max-w-[90vw]">
+      <img :src="image" class="max-h-[90vh] max-w-[90vw]" />
     </div>
   </template>
 
