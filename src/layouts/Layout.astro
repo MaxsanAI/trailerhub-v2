@@ -19,46 +19,26 @@ const { title } = Astro.props as Props;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
 
-    <!-- ❌ DISABLED: causes state bugs with SPA + Alpine -->
-    <!-- <meta name="view-transition" content="same-origin" /> -->
-
     <!-- Alpine -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!-- IMPORTANT: reset Alpine state on navigation -->
-    <script is:inline>
-      document.addEventListener("astro:page-load", () => {
-        document.querySelectorAll("[x-data]").forEach((el) => {
-          if (el.__x) {
-            el.__x.$data.isOpen = false;
-            el.__x.$data.trailerOpen = false;
-            el.__x.$data.imageOpen = false;
-          }
-        });
-      });
-    </script>
-
-    <!-- SPA navigation (disabled for stability) -->
-    <!-- <script>
-      import '../scripts/spa-navigation.js'
-    </script> -->
   </head>
 
-  <body class="font-sans bg-gray-900 text-white" x-data>
+  <body class="font-sans bg-gray-900 text-white">
+
     <div class="min-h-screen flex flex-col">
 
       <!-- NAV -->
       <Nav />
 
       <!-- CONTENT -->
-      <div id="container" class="flex-1">
-        <div id="content">
-          <slot />
-        </div>
-
-        <Footer />
+      <div class="flex-1">
+        <slot />
       </div>
 
+      <!-- FOOTER -->
+      <Footer />
+
     </div>
+
   </body>
 </html>
