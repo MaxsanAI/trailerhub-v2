@@ -1,6 +1,4 @@
 ---
-import Modal from '../../../components/Modal.astro';
-
 const { id } = Astro.params;
 
 const url = `https://api.themoviedb.org/3/movie/${id}?append_to_response=credits,videos,images&api_key=${import.meta.env.TMDB_API_KEY}`;
@@ -36,6 +34,7 @@ const movie = {
 };
 ---
 
+<!-- MOVIE INFO -->
 <div class="movie-info border-b border-gray-800">
   <div class="container mx-auto px-4 py-16 flex flex-col md:flex-row">
 
@@ -67,10 +66,10 @@ const movie = {
         {movie.overview}
       </p>
 
-      <!-- TRAILER (SAFE VERSION) -->
-      <div x-data="{ trailerOpen: false }">
+      <!-- TRAILER (CLEAN, NO BUG VERSION) -->
+      {movie.videos.length > 0 && (
+        <div x-data="{ trailerOpen: false }">
 
-        {movie.videos.length > 0 && (
           <div class="mt-12">
             <button
               @click="trailerOpen = true"
@@ -79,24 +78,35 @@ const movie = {
               ▶ Play Trailer
             </button>
           </div>
-        )}
 
-        {movie.videos.length > 0 && (
-          <Modal open="trailerOpen" close="trailerOpen = false">
+          <!-- MODAL -->
+          <div
+            x-show="trailerOpen"
+            x-transition
+            class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          >
+            <!-- CLOSE -->
+            <button
+              class="absolute top-5 right-6 text-white text-4xl"
+              @click="trailerOpen = false"
+            >
+              ×
+            </button>
 
-            <div class="relative w-full overflow-hidden" style="padding-top:56.25%">
+            <!-- VIDEO -->
+            <div class="relative w-full max-w-5xl" style="padding-top:56.25%">
               <iframe
                 class="absolute top-0 left-0 w-full h-full"
-                src={`https://www.youtube.com/embed/${movie.videos[0].key}?autoplay=1`}
+                :src="trailerOpen ? `https://www.youtube.com/embed/${movie.videos[0].key}?autoplay=1` : ''"
                 allow="autoplay; encrypted-media"
                 allowfullscreen
               ></iframe>
             </div>
 
-          </Modal>
-        )}
+          </div>
 
-      </div>
+        </div>
+      )}
 
     </div>
   </div>
@@ -121,44 +131,20 @@ const movie = {
 </div>
 
 <!-- IMAGES -->
-<div class="movie-images" x-data="{ imageOpen: false, image: '' }">
+<div class="movie-images">
 
   <div class="container mx-auto px-4 py-16">
     <h2 class="text-4xl font-semibold">Images</h2>
 
     <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
-
       {movie.images.map(img => (
-        <a
-          href="#"
-          @click.prevent={`
-            imageOpen = true;
-            image = 'https://image.tmdb.org/t/p/original/${img.file_path}'
-          `}
-        >
-          <img
-            src={`https://image.tmdb.org/t/p/w500${img.file_path}`}
-            class="hover:opacity-75"
-            loading="lazy"
-          />
-        </a>
+        <img
+          src={`https://image.tmdb.org/t/p/w500${img.file_path}`}
+          class="hover:opacity-75"
+          loading="lazy"
+        />
       ))}
-
     </div>
   </div>
-
-  <!-- IMAGE MODAL -->
-  <template x-if="imageOpen">
-    <div class="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-      <button
-        class="absolute top-4 right-6 text-white text-3xl"
-        @click="imageOpen = false"
-      >
-        ×
-      </button>
-
-      <img :src="image" class="max-h-[90vh] max-w-[90vw]" />
-    </div>
-  </template>
 
 </div>
