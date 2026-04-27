@@ -11,14 +11,95 @@ const data = await res.json();
 
 const videos = data?.videos?.results ?? [];
 const credits = data?.credits ?? { cast: [], crew: [] };
-const images = data?.images?.backdrops ?? [];
 
-const movie = {
-  ...data,
-  videos,
-  credits,
-  images,
-};
+const trailer = videos.find((v) => v.type === "Trailer");
+
+const backdrop = data.backdrop_path
+  ? `https://image.tmdb.org/t/p/original${data.backdrop_path}`
+  : null;
+
+const poster = data.poster_path
+  ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
+  : "https://via.placeholder.com/500x750?text=No+Image";
 ---
 
-<!-- TU IDE TVOJ POSTOJEĆI HTML (isti koji si već imao) -->
+<div class="min-h-screen text-white">
+
+  <!-- BACKDROP -->
+  {backdrop && (
+    <div class="relative w-full h-[60vh] overflow-hidden">
+      <img
+        src={backdrop}
+        class="w-full h-full object-cover opacity-40"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+    </div>
+  )}
+
+  <!-- CONTENT -->
+  <div class="max-w-6xl mx-auto px-4 -mt-40 relative z-10">
+    <div class="flex flex-col md:flex-row gap-6">
+
+      <!-- POSTER (FIXED) -->
+      <div class="w-40 md:w-60 flex-shrink-0">
+        <div class="aspect-[2/3] overflow-hidden rounded-lg shadow-lg">
+          <img
+            src={poster}
+            alt={data.title}
+            class="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+
+      <!-- INFO -->
+      <div class="flex-1">
+        <h1 class="text-3xl md:text-5xl font-bold mb-3">
+          {data.title}
+        </h1>
+
+        <p class="text-gray-300 mb-4 max-w-2xl">
+          {data.overview}
+        </p>
+
+        <p class="text-sm text-gray-400 mb-2">
+          ⭐ {data.vote_average} • {data.release_date?.slice(0, 4)}
+        </p>
+
+        <!-- CAST -->
+        <div class="mt-4">
+          <h2 class="text-lg font-semibold mb-2">Cast</h2>
+          <div class="flex gap-4 overflow-x-auto">
+            {credits.cast.slice(0, 10).map((actor) => (
+              <div class="w-24 flex-shrink-0 text-center">
+                <div class="aspect-square overflow-hidden rounded-full bg-gray-800">
+                  {actor.profile_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                      class="w-full h-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <p class="text-xs mt-1 truncate">{actor.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TRAILER -->
+    {trailer && (
+      <div class="mt-10">
+        <h2 class="text-xl font-semibold mb-4">Trailer</h2>
+        <div class="aspect-video w-full overflow-hidden rounded-lg">
+          <iframe
+            class="w-full h-full"
+            src={`https://www.youtube.com/embed/${trailer.key}`}
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
